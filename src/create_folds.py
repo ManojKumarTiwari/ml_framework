@@ -3,13 +3,24 @@
 # imports
 import pandas as pd
 from sklearn import model_selection
+import argparse
 
 # to run the script
 if __name__ == "__main__":
 
-    # INPUT_FILE_PATH = "input/train.csv"
+    # construct the ArgumentParser Object
+    ap = argparse.ArgumentParser()
+
+    # add an argument
+    ap.add_argument("-k","--kfolds", help="number of folds to create")
+    ap.add_argument("-i","--input", help="path to input file")
+    ap.add_argument("-o","--output", help="path to output file")
+
+    # parse the arguments
+    args = vars(ap.parse_args())
+
     # read the file
-    df = pd.read_csv("../input/train.csv")
+    df = pd.read_csv(args["input"])
     # create "kfold" column
     df["kfold"] = -1
     
@@ -17,7 +28,7 @@ if __name__ == "__main__":
     df = df.sample(frac=1).reset_index(drop=True)
 
     # create number of folds
-    kf = model_selection.StratifiedKFold(n_splits=5, shuffle=False, random_state=123)
+    kf = model_selection.StratifiedKFold(n_splits=int(args["kfolds"]), shuffle=False, random_state=123)
 
     # loop over each fold and get the training and validation indexes
     for fold, (train_idx, val_idx) in enumerate(kf.split(X=df, y=df.target.values)):
@@ -26,17 +37,6 @@ if __name__ == "__main__":
         df.loc[val_idx, "kfold"] = fold
 
     # save the file
-    df.to_csv("../input/train_folds.csv", index=False)
-
-
-
-
-
-
-
-
-
-
-
+    df.to_csv(args["output"], index=False)
 
 
