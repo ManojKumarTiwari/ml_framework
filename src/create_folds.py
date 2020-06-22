@@ -7,7 +7,7 @@ from sklearn import model_selection
 # to run the script
 if __name__ == "__main__":
 
-    INPUT_FILE_PATH = "/input/train.csv"
+    INPUT_FILE_PATH = "input/train.csv"
     # read the file
     df = pd.read_csv(INPUT_FILE_PATH)
     # create "kfold" column
