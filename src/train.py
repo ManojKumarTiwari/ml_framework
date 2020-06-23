@@ -13,8 +13,10 @@ from . import utils
 from . import dispatcher
 
 # configured in run.sh file
-# path to traning file
+# path to training file with folds
 TRAINING_DATA = os.environ.get("TRAINING_DATA")
+# path to testing file
+TEST_DATA = os.environ.get("TEST_DATA")
 # which fold to use for training
 FOLD = int(os.environ.get("FOLD"))
 # which model to use
@@ -23,7 +25,11 @@ MODEL = os.environ.get("MODEL")
 FOLD_MAPPING = None
 
 if __name__ == "__main__":
+  # read the traning file with folds
   df = pd.read_csv(TRAINING_DATA)
+  # read the test file
+  df_test = pd.read_csv(TEST_DATA)
+
   FOLD_MAPPING = utils.fold_mapping(df.kfold.nunique())
   train_df = df[df.kfold.isin(FOLD_MAPPING.get(FOLD))]
   valid_df = df[df.kfold==FOLD]
@@ -37,13 +43,13 @@ if __name__ == "__main__":
   # set the order of features in valid_df same as train_df
   valid_df = valid_df[train_df.columns]
 
-  label_encoders = []
+  label_encoders = {}
   for c in train_df.columns:
     lbl = preprocessing.LabelEncoder()
-    lbl = lbl.fit(train_df[c].values.tolist() + valid_df[c].values.tolist())
+    lbl = lbl.fit(train_df[c].values.tolist() + valid_df[c].values.tolist() + df_test[c].values.tolist())
     train_df.loc[:, c] = lbl.transform(train_df[c].values.tolist())
     valid_df.loc[:, c] = lbl.transform(valid_df[c].values.tolist())
-    label_encoders.append((c, lbl))
+    label_encoders[c] = lbl
 
   # data is ready to train
   clf = dispatcher.MODELS[MODEL]
@@ -52,8 +58,9 @@ if __name__ == "__main__":
   print(metrics.roc_auc_score(yvalid, preds))
 
   #save files
-  joblib.dump(label_encoders, f"models/{MODEL}_label_encoder.pkl")
-  joblib.dump(clf, f"models/{MODEL}.pkl")
+  joblib.dump(label_encoders, f"models/{MODEL}_{FOLD}_label_encoder.pkl")
+  joblib.dump(clf, f"models/{MODEL}_{FOLD}.pkl")
+  joblib.dump(train_df.columns, f"models/{MODEL}_{FOLD}_columns.pkl")
 
 
 
