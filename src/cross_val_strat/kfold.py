@@ -1,5 +1,3 @@
-"""This module is used to create stratified k-folds"""
-
 # imports
 import pandas as pd
 from sklearn import model_selection
@@ -21,22 +19,20 @@ if __name__ == "__main__":
 
     # read the file
     df = pd.read_csv(args["input"])
-    # create "kfold" column
+    # create "kfold" column and intialize with -1
     df["kfold"] = -1
-    
+
     # shuffle the data
     df = df.sample(frac=1).reset_index(drop=True)
 
     # create number of folds
-    kf = model_selection.StratifiedKFold(n_splits=int(args["kfolds"]), shuffle=False, random_state=123)
+    kf = model_selection.KFold(n_splits=int(args["kfolds"]))
 
     # loop over each fold and get the training and validation indexes
-    for fold, (train_idx, val_idx) in enumerate(kf.split(X=df, y=df.target.values)):
+    for fold, (train_idx, val_idx) in enumerate(kf.split(X=df)):
         print(len(train_idx), len(val_idx))
         # assign the currect fold value to the "kfold" column of all rows which validation indexes
         df.loc[val_idx, "kfold"] = fold
 
     # save the file
     df.to_csv(args["output"], index=False)
-
-
